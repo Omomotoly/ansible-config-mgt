@@ -71,94 +71,80 @@ cat /var/lib/jenkins/jobs/ansible/builds/1/archive/README.md
 This confirms Jenkins successfully archived the updated README.md from the main branch after the webhook-triggered build.
 
 # Step 2 - Prepare your development environment using Visual Studio Code
+VS Code was already installed and configured with Remote-SSH access to the Jenkins-Ansible instance from prior setup, so this step required no additional configuration.
 
 Clone down the ansible-config-mgt repo to the Jenkins-Ansible instance.
 
 ```
 git clone https://github.com/Omomotoly/ansible-config-mgt.git
 ```
-![screenshot](images/*.png)13
+![screenshot](images/12.png)
+# Step 3 - Begin Ansible Development.
 
-VS Code was already installed and configured with Remote-SSH access to the Jenkins-Ansible instance from prior setup, so this step required no additional configuration.
-Step 3 - Begin Ansible Development.
+1\. Create a feature branch In your ansible-config-mgt repo, 
 
-    Create a feature branch In your ansible-config-mgt repo, create a new branch from main for development:
-
+Check out the newly created branch from main for development:
+```
 git checkout -b feature/prj-11-ansible-config
+```
 
-![screenshot](images/*.png)14
+2\. Create a directory and name it playbooks – It will be used to store all your playbook files.
 
-    Create a directory and name it playbooks – It will be used to store all your playbook files.
+3\. Create a directory and name it inventory – It will be used to keep your hosts organised.
 
-    Create a directory and name it inventory – It will be used to keep your hosts organised.
+4\. Within the playbooks folder, create your first playbook, and name it common.yml.
 
-    Within the playbooks folder, create your first playbook, and name it common.yml.
+5\. Within the inventory folder, create an inventory file () for each environment (Development, Staging, Testing and Production) dev, staging, uat, and prod respectively. These inventory files use .ini languages style to configure Ansible hosts.
 
-    Within the inventory folder, create an inventory file () for each environment (Development, Staging, Testing and Production) dev, staging, uat, and prod respectively. These inventory files use .ini languages style to configure Ansible hosts.
+![screenshot](images/13.png)
 
-![screenshot](images/*.png)15
-
-![screenshot](images/*.png)16
-Step 4 — Set Up an Ansible Inventory
+# Step 4 — Set Up an Ansible Inventory
 
 An Ansible inventory defines the hosts and groups of hosts on which commands, modules, and tasks in a playbook operate. Since our intention is to execute Linux commands on remote hosts, it's important to have a way to organize our hosts in an inventory.
 
-    Loaded the private key into ssh-agent on the local machine and connected to the Jenkins-Ansible server with agent forwarding.
+Loaded the private key into ssh-agent on the local machine and connected to the Jenkins-Ansible server with agent forwarding.
 
 Ansible uses TCP port 22 by default, which means it needs to reach the target servers via ssh — from Jenkins-Ansible. For this, you'll implement the concept of ssh-agent, so you don't need to import your private key into ssh-agent manually.
 
-On your local machine (not the Jenkins-Ansible server):
+* On your local machine (not the Jenkins-Ansible server):
 
+```
 eval `ssh-agent -s`
 ssh-add server-key.pem
+```
 
-![screenshot](images/*.png)17 ![screenshot](images/*.png)18
+* Confirmed the key was successfully forwarded to the Jenkins-Ansible server:
 
-    Confirmed the key was successfully forwarded to the Jenkins-Ansible server:
-
+```
 ssh-add -l
+```
+![screenshot](images/ssh-agent.png)
 
-![screenshot](images/*.png)19
-
-    Updated inventory/dev.yml with the private IP addresses of the servers from Projects 7–10:
-
+* Updated inventory/dev.ini with the private IP addresses of the servers from Projects 7–10:
+```
 [nfs]
-172.31.36.99 ansible_ssh_user=ec2-user
+172.31.23.26 ansible_ssh_user=ec2-user
 
 [webservers]
-172.31.36.90 ansible_ssh_user=ec2-user
-172.31.47.217 ansible_ssh_user=ec2-user
+172.31.29.216 ansible_ssh_user=ec2-user
+172.31.18.110 ansible_ssh_user=ec2-user
 
 [db]
-172.31.36.136 ansible_ssh_user=ec2-user
+172.31.29.78 ansible_ssh_user=ec2-user
 
 [lb]
-172.31.16.253 ansible_ssh_user=ubuntu
+172.31.46.134 ansible_ssh_user=ubuntu
+```
 
-![screenshot](images/*.png)20
+![screenshot](images/14.png)
 
-    Tested connectivity to all hosts defined in the inventory using Ansible's ping module:
-
-ansible all -i inventory/dev.yml -m ping
-
-This verifies Ansible can successfully connect to each host via SSH (using the forwarded key) and run a module, before proceeding to write the actual configuration playbook.
-
-Troubleshooting note: Running ansible ... -m ping against multiple hosts in parallel caused SSH host-key confirmation prompts to collide, since Ansible connects to all hosts simultaneously but the terminal can only respond to one prompt at a time. Resolved by manually SSH-ing into each host individually first (accepting the fingerprint with yes), which populated ~/.ssh/known_hosts for all hosts before re-running the Ansible ping test.
-
-![screenshot](images/*.png)21 ![screenshot](images/*.png)22 ![screenshot](images/*.png)23
-
-Ran the command again
-
-ansible all -i inventory/dev.yml -m ping
-
-![screenshot](images/*.png)24
-Step 5 — Create a Common Playbook
+# Step 5 — Create a Common Playbook
 
 Wrote instructions for Ansible to perform on all servers listed in inventory/dev.yml. The common.yml playbook holds configuration for repeatable, re-usable, multi-machine tasks common to all systems in the infrastructure.
 
-Updated playbooks/common.yml with the following code:
+1\. Updated playbooks/common.yml with the following code:
 
----
+```
 - name: update web, nfs and db servers
   hosts: webservers, nfs, db
   become: yes
@@ -180,11 +166,19 @@ Updated playbooks/common.yml with the following code:
       apt:
         name: wireshark
         state: latest
+```
+
+![screenshot](images/15.png)
 
 This playbook is split into two plays: the first installs/updates wireshark on the RHEL 8 servers (webservers, nfs, db) using yum; the second does the same on the load balancer (lb) using apt, after refreshing the package cache. Both plays use become: yes to run as the root user.
 
-![screenshot](images/*.png)25
-Step 6 - Update GIT with the latest code
+2\. Extend the Playbook (Optional Tasks)
+You can add more common configuration tasks like creating directories, changing timezones, or running scripts. Example:
+
+![screenshot](images/16.png)
+
+This approach highlights a key Ansible principle: separating inventory from playbooks. The same common.yaml can later run against staging or prod inventories without code duplication — ensuring scalability and environment parity
+# Step 6 - Update GIT with the latest code
 
 At this point, all directories and files existed locally on the Jenkins-Ansible server, and needed to be pushed to GitHub.
 

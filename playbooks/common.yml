@@ -1,0 +1,53 @@
+- name: update web, nfs and db servers
+  hosts: webservers, nfs, db
+  become: yes
+  tasks:
+    - name: ensure wireshark is at the latest version
+      yum:
+        name: wireshark
+        state: latest
+    - name: Create ansible_implement directory
+      file:
+        path: /opt/ansible_implement
+        state: directory
+
+    - name: Create test.sh file
+      file:
+        path: /opt/ansible_implement/test.sh
+        state: touch
+
+    - name: Change timezone to Lagos time
+      command: timedatectl set-timezone Africa/Lagos
+
+    - name: Run a shell script
+      shell: /opt/ansible_implement/test.sh
+
+
+
+- name: update LB server
+  hosts: lb
+  become: yes
+  tasks:
+    - name: Update apt repo
+      apt:
+        update_cache: yes
+
+    - name: ensure wireshark is at the latest version
+      apt:
+        name: wireshark
+        state: latest
+    - name: Create ansible_implement directory
+      file:
+        path: /opt/ansible_implement
+        state: directory
+
+    - name: Create test.sh file
+      file:
+        path: /opt/ansible_implement/test.sh
+        state: touch
+
+    - name: Change timezone to Lagos time
+      command: timedatectl set-timezone Africa/Lagos
+
+    - name: Run a shell script
+      shell: /opt/ansible_implement/test.sh

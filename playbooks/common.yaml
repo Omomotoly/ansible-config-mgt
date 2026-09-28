@@ -1,0 +1,31 @@
+- name: update web, and nfs servers
+hosts: webservers, nfs
+become: yes
+tasks:
+  - name: ensure wireshark is at the latest version
+    yum:
+    name: wireshark
+    state: latest
+  - name: Create a directory and file
+    file:
+    path: /opt/app/config.txt
+    state: touch
+
+  - name: Change timezone to UTC
+    command: timedatectl set-timezone UTC
+
+  - name: Run a shell script
+    shell: /home/ubuntu/scripts/deploy.sh
+
+- name: update LB and db server
+hosts: lb, db
+become: yes
+tasks:
+- name: Update apt repo
+    apt:
+    update_cache: yes
+
+- name: ensure wireshark is at the latest version
+    apt:
+    name: wireshark
+    state: latest

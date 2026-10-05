@@ -654,22 +654,21 @@ Then run the ansible playbook command again
 * **Resolution**: Handled by creating the target directory and deploying a shell script with execute permissions (0755) prior to execution:
 
 ```
-- name: Ensure scripts directory exists
-  file:
-    path: /home/ubuntu/scripts
-    state: directory
-    mode: '0755'
-
-- name: Create deploy.sh script
-  copy:
-    dest: /home/ubuntu/scripts/deploy.sh
-    content: |
-      #!/bin/bash
-      echo "Deploy script executed successfully!"
-    mode: '0755'
-
-- name: Run a shell script
-  shell: /home/ubuntu/scripts/deploy.sh
+- name: Ensure deployment script exists
+      ansible.builtin.copy:
+        dest: /home/ubuntu/scripts/deploy.sh
+        content: |
+          #!/bin/bash
+          echo "Deploy script executed successfully!"
+        mode: '0755'
+      notify: Run deployment script
+```
+Added this block at the bottom of the playbook at the handlers section:
+```
+handlers:
+  - name: Run deployment script
+    ansible.builtin.command:
+      cmd: /home/ubuntu/scripts/deploy.sh
 ```
 
 ![screenshot](images/36.png)

@@ -613,16 +613,11 @@ ansible-playbook -i inventory/dev.ini playbooks/common.yaml
 * **Problem**: Ansible execution hangs
 Running ansible-playbook hung indefinitely after displaying ok: [IP_ADDRESS] during host key verification.
 * **Cause**: Ansible operates in non-interactive parallel threads. Because host key checking was active and the remote host keys were not yet accepted in known_hosts, Ansible paused while awaiting background interactive yes/no prompts.
-* **Solution**: Disabled SSH host key checking at the project level by creating an ansible.cfg file in the project root directory with the following configuration:
+* **Solution**: To resolve the non-interactive prompt block, I pre-populated the ~/.ssh/known_hosts file on the control node using ssh-keyscan to fetch and record public host keys for all managed inventory nodes before running playbooks.
 ```
-nano ~ansible-config-mgt/ansible.cfg
-```
-```
-[defaults]
-host_key_checking = False
+sudo -u jenkins bash -c 'ssh-keyscan -H <TARGET_IPs> >> ~/.ssh/known_hosts'
 ```
 Then run the ansible playbook command again
-![screenshot](images/34.png) 
 
 * **Issue**: File Creation Task Failure (/opt/app/config.txt)
 
@@ -630,6 +625,7 @@ Then run the ansible playbook command again
 * **Cause**: The file module with state: touch attempts to create a file inside a directory path (/opt/app), but the parent directory /opt/app did not exist on the target remote hosts.
 * **Resolution**: Updated the playbook to explicitly ensure the target directory exists (state: directory) before creating the file:
 
+Edit the playbook file
 ```
 - name: Ensure /opt/app directory exists
   file:
@@ -643,8 +639,6 @@ Then run the ansible playbook command again
     state: touch
     mode: '0644'
 ```
-Edit the playbook file
-![screenshot](images/35.png)
 Then run the ansible playbook command again
 
 * **Issue**: Shell Script Execution Failure (deploy.sh)
@@ -670,8 +664,8 @@ handlers:
     ansible.builtin.command:
       cmd: /home/ubuntu/scripts/deploy.sh
 ```
-
 ![screenshot](images/36.png)
+
 ![screenshot](images/37.png)
 
 

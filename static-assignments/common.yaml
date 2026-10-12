@@ -1,49 +1,57 @@
-- name: update web, and nfs servers
+- name: Update web and NFS servers
   hosts: webservers, nfs
   become: yes
+
   tasks:
-   - name: ensure wireshark is at the latest version
-     yum:
-       name: wireshark
-       state: latest
-   - name: Ensure /opt/app directory exists
-     file:
-       path: /opt/app
-       state: directory
-       mode: '0755'
-   - name: Create a directory and file
-     file:
-       path: /opt/app/config.txt
-       state: touch
-   - name: Change timezone to UTC
-     command: timedatectl set-timezone UTC
-   - name: Ensure scripts directory exists
-     file:
-       path: /home/ubuntu/scripts
-       state: directory
-       mode: '0755'
+    - name: Ensure Wireshark is installed
+      ansible.builtin.package:
+        name: wireshark
+        state: present
 
-   - name: Create deploy.sh script
-     copy:
-       dest: /home/ubuntu/scripts/deploy.sh
-       content: |
-         #!/bin/bash
-         echo "Deploy script executed successfully!"
-       mode: '0755'
+    - name: Ensure /opt/app directory exists
+      ansible.builtin.file:
+        path: /opt/app
+        state: directory
+        mode: '0755'
 
-   - name: Run a shell script
-     shell: /home/ubuntu/scripts/deploy.sh
+    - name: Ensure config file exists
+      ansible.builtin.file:
+        path: /opt/app/config.txt
+        state: touch
+        mode: '0644'
+        modification_time: preserve
+        access_time: preserve
 
-- name: update LB and db server
+    - name: Set system timezone to UTC
+      community.general.timezone:
+        name: UTC
+
+    - name: Ensure deployment script exists
+      ansible.builtin.copy:
+        dest: /home/ubuntu/scripts/deploy.sh
+        content: |
+          #!/bin/bash
+          echo "Deploy script executed successfully!"
+        mode: '0755'
+      notify: Run deployment script
+
+  handlers:
+    - name: Run deployment script
+      ansible.builtin.command:
+        cmd: /home/ubuntu/scripts/deploy.sh
+
+
+- name: Update LB and DB servers
   hosts: lb, db
   become: yes
+
   tasks:
-   - name: Update apt repo
-     apt:
-      update_cache: yes
+    - name: Update package cache on Debian/Ubuntu
+      ansible.builtin.apt:
+        update_cache: yes
+      when: ansible_os_family == "Debian"
 
-   - name: ensure wireshark is at the latest version
-     apt:
-      name: wireshark
-      state: latest
-
+    - name: Ensure Wireshark is installed
+      ansible.builtin.package:
+        name: wireshark
+        state: present

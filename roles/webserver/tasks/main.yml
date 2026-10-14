@@ -1,6 +1,5 @@
 ---
 # tasks file for webserver
----
 - name: install apache
   become: true
   ansible.builtin.yum:
@@ -16,7 +15,7 @@
 - name: clone a repo
   become: true
   ansible.builtin.git:
-    repo: [https://github.com/StegTechHub/tooling.git](https://github.com/StegTechHub/tooling.git)
+    repo: https://github.com/StegTechHub/tooling.git
     dest: /var/www/tooling-src
     force: yes
 

@@ -1,4 +1,11 @@
 ---
-- hosts: all
-- import_playbook: ../static-assignments/common.yaml
-- import_playbook: ../static-assignments/uat-webservers.yml
+- name: Include dynamic variables
+  import_playbook: ../dynamic-assignments/env-vars.yml
+  tags:
+    - always
+
+- import_playbook: ../static-assignments/common.yml
+
+- name: Webserver assignment
+  import_playbook: ../static-assignments/uat-webservers.yml
+

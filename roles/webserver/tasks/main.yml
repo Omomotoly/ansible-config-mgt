@@ -6,6 +6,17 @@
     name: "httpd"
     state: present
 
+- name: install php and required modules
+  become: true
+  ansible.builtin.yum:
+    name:
+      - php
+      - php-mysqlnd
+      - php-fpm
+      - php-json
+    state: present
+  notify: restart httpd
+
 - name: install git
   become: true
   ansible.builtin.yum:
@@ -27,8 +38,18 @@
     remote_src: yes
     mode: preserve
 
+- name: Ensure DirectoryIndex prioritizes index.php in Apache configuration
+  ansible.builtin.lineinfile:
+    path: /etc/httpd/conf/httpd.conf
+    regexp: '^(\s*DirectoryIndex\s+)'
+    line: 'DirectoryIndex index.php index.html'
+    state: present
+  become: true
+  notify: restart httpd
+
 - name: Start service httpd, if not started
   become: true
   ansible.builtin.service:
     name: httpd
     state: started
+    enabled: true

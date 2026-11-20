@@ -1,0 +1,9 @@
+- name: Restart Nginx
+  ansible.builtin.service:
+    name: nginx
+    state: restarted
+
+- name: Restart Apache
+  ansible.builtin.service:
+    name: "{{ apache_service_name | default('apache2') }}"
+    state: restarted

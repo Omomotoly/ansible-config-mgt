@@ -3,7 +3,7 @@
   include_vars: "{{ item }}"
   with_first_found:
     - files:
-        - "{{ inventory_file | basename }}"
+        - "{{ (inventory_file | basename | splitext)[0] }}.yml"
         - dev.yml
         - stage.yml
         - prod.yml

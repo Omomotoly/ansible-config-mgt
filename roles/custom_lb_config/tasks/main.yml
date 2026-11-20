@@ -1,0 +1,43 @@
+---
+- name: Remove default Nginx vhost if configured
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  when: enable_nginx_lb | default(false) and nginx_remove_default_vhost | default(false)
+  notify: Restart Nginx
+
+- name: Deploy Nginx configuration from template
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/conf.d/load-balancer.conf
+  when: enable_nginx_lb | default(false)
+  notify: Restart Nginx
+
+- name: Ensure active Nginx processes are stopped when using Apache
+  ansible.builtin.service:
+    name: nginx
+    state: stopped
+    enabled: false
+  when: enable_apache_lb | default(false)
+  ignore_errors: yes
+
+- name: Enable Apache proxy modules
+  community.general.apache2_module:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - proxy
+    - proxy_http
+    - proxy_balancer
+    - lbmethod_byrequests
+  when: enable_apache_lb | default(false) | bool
+  notify: Restart Apache
+
+- name: Deploy Apache load balancer configuration template
+  ansible.builtin.template:
+    src: apache.conf.j2
+    dest: /etc/apache2/conf-enabled/load-balancer.conf
+  when: enable_apache_lb | default(false)
+  notify: Restart Apache
+
+

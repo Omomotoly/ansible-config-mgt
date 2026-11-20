@@ -6,5 +6,6 @@ mysql_databases:
 mysql_users:
   - name: webaccess
     host: 172.31.64.0/20
-    password: tooling
+    plugin: caching_sha2_password
+    plugin_auth_string: tooling
     priv: "tooling.*:ALL"

@@ -1,0 +1,14 @@
+<VirtualHost *:80>
+    ServerName {{ lb_server_name | default('localhost') }}
+
+    <Proxy "balancer://{{ apache_cluster_name | default('mycluster') }}">
+{% for server in backend_servers %}
+        BalancerMember http://{{ server }}
+{% endfor %}
+        ProxySet lbmethod={{ apache_lb_method | default('byrequests') }}
+    </Proxy>
+
+    ProxyPreserveHost On
+    ProxyPass / balancer://{{ apache_cluster_name | default('mycluster') }}/
+    ProxyPassReverse / balancer://{{ apache_cluster_name | default('mycluster') }}/
+</VirtualHost>

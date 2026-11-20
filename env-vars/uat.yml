@@ -1,2 +1,52 @@
-enable_nginx_lb: true
+---
+enable_nginx_lb: false
+enable_apache_lb: true
 load_balancer_is_required: true
+
+# ---- Nginx settings ----
+
+# Remove default Nginx placeholder page
+nginx_remove_default_vhost: true
+
+# Toggle to stop Apache service if running
+stop_apache_service: true
+
+# Define backend web server pool
+nginx_upstreams:
+  - name: web_backend_pool
+    strategy: "least_conn"
+    servers:
+      - "172.31.16.128"  # Web1-UAT
+      - "172.31.20.190"  # Web2-UAT
+
+# Configure the load balancer virtual host
+nginx_vhosts:
+  - listen: "80"
+    server_name: "app.local"  # Replace with your domain or server IP
+    extra_parameters: |
+      location / {
+          proxy_pass http://web_backend_pool;
+          proxy_http_version 1.1;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+      }
+# ---- Apache settings ----
+
+# Define Apache package and service names
+apache_package_name: apache2
+apache_service_name: apache2
+
+# Set the load balancing method for Apache
+apache_lb_method: byrequests
+
+# Define backend web server pool for Apache
+backend_servers:
+  - "172.31.16.128"  # Web1-UAT
+  - "172.31.20.190"  # Web2-UAT
+
+# Configure the Apache load balancer virtual host
+apache_vhosts:
+  - listen: "80"
+    servername: "app.local"  # Replace with your domain or server IP

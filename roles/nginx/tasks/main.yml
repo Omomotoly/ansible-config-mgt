@@ -7,6 +7,17 @@
   set_fact:
     nginx_user: "{{ __nginx_user }}"
   when: nginx_user is not defined
+  
+# Stop Apache before installing or configuring Nginx
+- name: Ensure Apache is stopped and disabled if configured
+  ansible.builtin.service:
+    name: "{{ 'httpd' if ansible_os_family == 'RedHat' else 'apache2' }}"
+    state: stopped
+    enabled: false
+  become: yes
+  when: stop_apache_service | default(false)
+  failed_when: false
+  ignore_errors: yes
 
 # Setup/install tasks.
 - include_tasks: setup-RedHat.yml

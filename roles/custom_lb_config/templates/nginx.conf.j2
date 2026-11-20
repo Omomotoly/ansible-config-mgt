@@ -1,0 +1,23 @@
+upstream {{ nginx_upstream_name | default('nginx_upstreams') }} {
+{% if nginx_lb_strategy is defined and nginx_lb_strategy != '' %}
+    {{ nginx_lb_strategy }};
+{% endif %}
+{% for upstream in nginx_upstreams %}
+  {% for server in upstream.servers %}
+    server {{ server }};
+  {% endfor %}
+{% endfor %}
+}
+
+server {
+    listen 80;
+    server_name {{ lb_server_name | default('_') }};
+
+    location / {
+        proxy_pass http://{{ nginx_upstream_name | default('nginx_upstreams') }};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+

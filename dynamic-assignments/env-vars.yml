@@ -5,7 +5,7 @@
     - files:
         - "{{ (inventory_file | basename | splitext)[0] }}.yml"
         - dev.yml
-        - stage.yml
+        - staging.yml
         - prod.yml
         - uat.yml
       paths:

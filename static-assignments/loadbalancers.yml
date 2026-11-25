@@ -1,8 +1,8 @@
 ---
-- hosts: lb
+- hosts: load_balancers
   become: true
   vars_files:
-    - ../envrs/uat.yml
+    - ../env-vars/uat.yml
   roles:
     - { role: custom_lb_config, when: load_balancer_is_required | default(false) }
     - { role: nginx, when: enable_nginx_lb and load_balancer_is_required }

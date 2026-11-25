@@ -1,11 +1,11 @@
-mysql_root_password: database@2pwd
+mysql_root_password: "{{ vault_mysql_root_password }}"
 mysql_databases:
   - name: tooling
     encoding: latin1
     collation: latin1_general_ci
 mysql_users:
   - name: webaccess
-    host: 172.31.64.0/20
+    host: 172.31.%
     plugin: caching_sha2_password
-    plugin_auth_string: tooling
+    plugin_auth_string: "{{ vault_mysql_user_password }}"
     priv: "tooling.*:ALL"
